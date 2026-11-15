@@ -1,0 +1,9 @@
+.env
+data/
+node_modules/
+*.log
+.zrok-token
+.ssh/
+bin/
+logs/
+run/

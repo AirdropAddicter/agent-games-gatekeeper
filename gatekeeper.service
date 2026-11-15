@@ -1,0 +1,23 @@
+# systemd unit for the Gatekeeper agent — for deployment on a host WITH
+# systemd (a VPS, Fly.io/Render equivalent, etc.). It CANNOT run in this
+# VM: there is no systemd user bus here ("Failed to connect to bus"), so
+# supervise.sh is the resilience layer instead. Kept for portability.
+[Unit]
+Description=zkVerify Agent Games Proof Gatekeeper agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hatch/workspace/agent-games/gatekeeper
+ExecStart=/usr/bin/node server.js
+EnvironmentFile=/home/hatch/workspace/agent-games/gatekeeper/.env
+Restart=always
+RestartSec=5
+# NOTE: the tunnel (ngrok/cloudflared) needs its own unit with the same
+# Restart policy, and the public URL must be re-registered in the
+# Agent Games dashboard whenever it changes (ngrok free URLs rotate on
+# every restart — use a reserved domain for stability).
+
+[Install]
+WantedBy=default.target
