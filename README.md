@@ -7,15 +7,15 @@ with the official circuit, and answers within the 60-second deadline.
 
 Full competition research: `../RESEARCH.md`.
 
-## Status (15 Nov 2026, ~15:00 WIB)
+## Status (15 Nov 2026, ~19:30 WIB)
 
 - ✅ Agent built and **fully tested locally** — see "Tests".
 - ✅ Running locally under the supervisor: `http://127.0.0.1:8788/health`
 - ✅ **Public HTTPS URL live via serveo.net SSH tunnel** — see "Public endpoint".
-- ⏳ **Dashboard registration in progress** — agent being registered from the owner's account.
-- ❌ HMAC secret is still the placeholder in `.env` (issued at registration).
-- ⚠️ Practice-mode validation still required to confirm the unconfirmed
-  assumptions listed under "Gaps to confirm in practice mode".
+- ✅ **Registered in the dashboard as WOTSIT-GATEKEEPER** (Proof Gatekeeper track).
+- ✅ **Preflight passed** (515 ms) — endpoint answers the signed preflight probe with `{"ok":true,"protocolVersion":"v1"}`.
+- ✅ **Practice tasks 3/3 passed** (VALID_CONDITION → APPROVE, 2× AMOUNT_OVERFLOW → REJECT), all Groth16 proofs verified by the platform, latency 787–2390 ms.
+- ✅ HMAC secret configured in `.env` (issued at registration, never committed).
 
 ## How it works
 

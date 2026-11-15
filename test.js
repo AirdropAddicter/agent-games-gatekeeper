@@ -190,7 +190,7 @@ async function main() {
   // 7. Preflight-style ping (no input) => 200 ok.
   const pingBody = JSON.stringify({ type: "agent-games.preflight.v1", task_id: "preflight-1" });
   const ping = await request(port, "POST", "/", pingBody, sign(pingBody));
-  check("preflight ping (no input) -> 200 ok", ping.status === 200 && JSON.parse(ping.body).status === "ok");
+  check("preflight ping (no input) -> 200 ok protocol-v1", ping.status === 200 && JSON.parse(ping.body).ok === true && JSON.parse(ping.body).protocolVersion === "v1");
 
   const maxMs = Math.max(...proveTimes);
   console.log(`\nSlowest trap round-trip: ${maxMs} ms (deadline 60000 ms)`);

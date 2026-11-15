@@ -95,13 +95,37 @@ supervisor_main() {
 }
 
 warm_loop() {
-  # Keep the serveo tunnel warm: the first request after idle can take
-  # ~10s (and occasionally stall), which risks harness timeouts. A
-  # health hit every 4 minutes keeps the forwarding path hot.
+  # Keep-warm + health-watch. Serveo can expire the port forwarding
+  # while the SSH process stays alive (edge returns 502) — the tunnel
+  # loop only restarts on ssh exit, so this loop detects a dead
+  # tunnel and kills it (tunnel_loop brings up a fresh one). Hit the
+  # public URL every 60s; after 2 consecutive failures (or an
+  # "expired" line in serveo.log), diagnose: local agent up but
+  # public down => restart the tunnel; local down => restart agent.
+  load_env
+  local fails=0
   while true; do
-    sleep 240
+    sleep 60
     if [ -f "$PUBLIC_URL_FILE" ]; then
-      curl -s -m 10 "$(cat "$PUBLIC_URL_FILE")/health" -o /dev/null 2>&1 || true
+      if curl -s -m 10 -o /dev/null -w "%{http_code}" "$(cat "$PUBLIC_URL_FILE")/health" 2>/dev/null | grep -q "^200$"; then
+        fails=0
+      else
+        fails=$((fails + 1))
+      fi
+    fi
+    if grep -q "Port forwarding for .* expired" "$ROOT/logs/serveo.log" 2>/dev/null; then
+      fails=2
+    fi
+    if [ "$fails" -ge 2 ]; then
+      if curl -s -m 5 -o /dev/null "http://127.0.0.1:${PORT:-8788}/health" 2>/dev/null; then
+        echo "$(date -Iseconds) public health failing (fails=$fails), local OK; restarting tunnel" >>"$ROOT/logs/supervisor.log"
+        [ -f "$TUNNEL_PID_FILE" ] && kill "$(cat "$TUNNEL_PID_FILE")" 2>/dev/null || true
+      else
+        echo "$(date -Iseconds) local health failing; restarting agent" >>"$ROOT/logs/supervisor.log"
+        [ -f "$AGENT_PID_FILE" ] && kill "$(cat "$AGENT_PID_FILE")" 2>/dev/null || true
+      fi
+      fails=0
+      sleep 10
     fi
   done
 }

@@ -81,9 +81,16 @@ async function handleTaskEnvelope(envelope) {
   const mode = envelope.mode || "competition";
   const input = envelope.input || null;
 
-  // No input payload (e.g. a preflight ping): acknowledge.
-  if (!input) {
-    return { status: "ok", task_id: taskId };
+  // No input payload (e.g. a preflight ping): acknowledge with the exact
+  // protocol-v1 shape the platform validates:
+  // {"ok":true,"protocolVersion":"v1"} (signed, HTTP 200).
+  // Also answer any explicit preflight-typed probe the same way.
+  const isPreflight =
+    !input ||
+    envelope.type === "agent-games.preflight.v1" ||
+    (typeof envelope.type === "string" && envelope.type.includes("preflight"));
+  if (isPreflight) {
+    return { ok: true, protocolVersion: "v1" };
   }
 
   const { decision, reason_code } = decide(input, (tx) => store.hasSeenProofTx(tx));
